@@ -1,0 +1,13 @@
+{
+  "name": "copeee-skills",
+  "description": "Productivity skills for Claude Code: interview-driven requirements, parallel task dispatch, session history saving, GitHub knowledge base, and code simplification",
+  "version": "1.0.0",
+  "author": {
+    "name": "CopeeeTang",
+    "url": "https://github.com/CopeeeTang"
+  },
+  "homepage": "https://github.com/CopeeeTang/copeee-skills",
+  "repository": "https://github.com/CopeeeTang/copeee-skills",
+  "license": "MIT",
+  "keywords": ["skills", "interview", "spawn", "parallel", "session", "github-kb", "code-simplifier", "productivity"]
+}
