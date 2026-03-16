@@ -1,7 +1,6 @@
 ---
 name: save-session
 description: 在对话 compact 前保存会话行动路线摘要。当检测到 context 即将满、用户准备结束会话、或用户主动调用时使用。提炼关键 prompt、思路、探索方向和执行结果，写入 docs/history/ 目录。
-argument-hint: "[project-name (可选，自动推断)]"
 ---
 
 # Save Session - 会话行动路线保存（子 Agent 版）

@@ -25,6 +25,51 @@ A task-oriented clarification interview that helps AI deeply understand user req
 - Task is simple and self-explanatory → Execute directly
 - User explicitly provides complete requirements
 
+## CRITICAL: Always Use AskUserQuestion Tool
+
+**Every clarifying question in this interview MUST be asked via the `AskUserQuestion` tool.** This renders an interactive selection UI in Claude Code. NEVER output questions as plain markdown text — the user cannot select options from plain text.
+
+### Tool Parameter Format
+
+```json
+{
+  "questions": [
+    {
+      "question": "Clear question ending with ?",
+      "header": "ShortLabel",
+      "options": [
+        { "label": "Option A", "description": "What this means" },
+        { "label": "Option B", "description": "What this means" },
+        { "label": "Option C", "description": "What this means" }
+      ],
+      "multiSelect": false
+    }
+  ]
+}
+```
+
+### Constraints
+
+| Parameter | Rule |
+|-----------|------|
+| `header` | Max 12 characters. Short tag like "Auth方式", "Scope", "Backend" |
+| `options` | 2–4 items. No "Other" option needed — Claude Code adds it automatically |
+| `label` | 1–5 words. Concise choice name |
+| `description` | Brief explanation of trade-offs or implications |
+| `multiSelect` | `true` when choices are not mutually exclusive (e.g., "Which features?") |
+| `questions` | 1–4 questions per call. Use 1 for focused interviews; batch 2–4 only when tightly coupled |
+
+### When to Use Open-Ended Questions
+
+For motivations, goals, and context that needs free-form elaboration, use `AskUserQuestion` with broad options that guide the user. If truly open-ended input is needed, design options that cover common cases — the user can always select "Other" to type freely.
+
+### Recommended Option (First Position)
+
+If you have a recommended choice, put it first and append "(Recommended)" to the label:
+```json
+{ "label": "JWT tokens (Recommended)", "description": "Stateless, scalable, industry standard" }
+```
+
 ## Interview Process
 
 ```dot
@@ -35,9 +80,9 @@ digraph interview_flow {
     start [label="User invokes /interview" shape=ellipse];
     context [label="1. Understand task context"];
     analyze [label="2. Apply Think-Harder analysis"];
-    questions [label="3. Ask clarifying questions\n(multiple choice preferred)"];
+    questions [label="3. Ask via AskUserQuestion tool\n(NEVER plain text)"];
     enough [label="AI judges: enough info?" shape=diamond];
-    more [label="Ask next question"];
+    more [label="Next AskUserQuestion call"];
     strategy [label="4. Assess execution strategy\n(Single / Todo / Teams)"];
     complex [label="Exceptionally complex?" shape=diamond];
     ultra [label="Suggest /think-ultra"];
@@ -146,27 +191,11 @@ Simple (1-2 steps)?
 | **Deep** | Complex tasks (built-in think-harder) | "Why this approach?" "Hidden assumptions?" |
 | **Ultra** | Exceptionally complex → suggest `/think-ultra` | Philosophical, multi-paradigm problems |
 
-### Question Style
-
-**Prefer multiple choice** (fits AskUserQuestion tool):
-```
-Which authentication method do you prefer?
-A. JWT tokens (stateless, scalable)
-B. Session-based (simpler, server-side state)
-C. OAuth only (third-party providers)
-D. Other
-```
-
-**Use open-ended for**:
-- Motivations and goals
-- Context that needs elaboration
-- When options are unclear
-
 ### One Question at a Time
 
-- Ask **one focused question** per turn
-- Wait for response before next question
-- Group related sub-questions only if tightly coupled
+- Ask **one focused question** per `AskUserQuestion` call
+- Wait for the user's selection before asking the next question
+- Batch 2–4 questions in a single call only when they are tightly coupled and independent
 
 ## Output: Requirements Summary
 
@@ -266,73 +295,56 @@ Shall I proceed with this approach?
 
 *(Applying Think-Harder: 分析问题结构，识别隐含假设...)*
 
-第一个问题：这个认证功能主要面向什么用户群体？
+→ **Calls `AskUserQuestion`**:
+```json
+{
+  "questions": [{
+    "question": "这个认证功能主要面向什么用户群体？",
+    "header": "用户群体",
+    "options": [
+      { "label": "内部团队", "description": "公司员工使用，可信任环境" },
+      { "label": "公开用户", "description": "互联网用户注册使用" },
+      { "label": "企业客户", "description": "B2B 场景，需要组织管理" }
+    ],
+    "multiSelect": false
+  }]
+}
+```
 
-| 选项 | 描述 |
-|------|------|
-| A. 内部团队 | 公司员工使用，可信任环境 |
-| B. 公开用户 | 互联网用户注册使用 |
-| C. 企业客户 | B2B 场景，需要组织管理 |
-| D. 其他 | 请说明 |
+**User selects**: 公开用户
 
-**User**: B，公开用户
-
-**AI**: 明白。
+**AI**: 明白，公开用户场景。
 
 *(Think-Harder: 公开用户意味着需要考虑安全性、滥用防护、隐私合规...)*
 
-第二个问题：需要支持哪些登录方式？
+→ **Calls `AskUserQuestion`**:
+```json
+{
+  "questions": [{
+    "question": "需要支持哪些登录方式？",
+    "header": "登录方式",
+    "options": [
+      { "label": "邮箱+社交 (Recommended)", "description": "邮箱密码注册 + Google/GitHub 第三方登录" },
+      { "label": "仅邮箱密码", "description": "传统注册登录，实现简单" },
+      { "label": "仅社交登录", "description": "Google/GitHub 等第三方，无需管理密码" }
+    ],
+    "multiSelect": false
+  }]
+}
+```
 
-| 选项 | 描述 |
-|------|------|
-| A. 邮箱密码 | 传统注册登录 |
-| B. 社交登录 | Google/GitHub 等第三方 |
-| C. 两者都要 | 邮箱 + 社交登录 |
-| D. 其他 | 手机号、SSO 等 |
-
-*(Interview continues until AI has enough understanding...)*
+*(Interview continues via `AskUserQuestion` calls until AI has enough understanding...)*
 
 **AI**: 我已经理解了你的需求，让我总结一下：
 
-## Requirements Summary
-
-### Goal
-为公开用户添加认证功能，支持邮箱和 Google 社交登录
-
-### Scope
-- **In scope**: 注册、登录、密码重置、JWT token
-- **Out of scope**: 权限管理、用户画像
-
-### Success Criteria
-- [ ] 用户可以邮箱注册并登录
-- [ ] 用户可以用 Google 账号登录
-- [ ] Token 安全存储和自动刷新
-
-### Key Insights
-- 公开用户场景需要考虑 rate limiting 防止暴力破解
-- 社交登录简化注册流程但增加第三方依赖
-
-### Execution Strategy
-- **Recommended**: Task Todo
-- **Rationale**: 4+ sequential steps with dependencies (数据库 schema → 后端 API → 前端页面 → 测试), same-file edits likely in auth middleware and user model
-- **Estimated steps**: 5 steps — (1) 数据库 schema 和 User model, (2) 邮箱注册/登录 API, (3) Google OAuth 集成, (4) 前端登录页面, (5) 测试和安全加固
-
-这个理解准确吗？确认后我们进入 plan 阶段。
-
-Based on the requirements, I recommend:
-
-- **Thinking Depth**: Needs planning — 认证功能涉及多个模块和安全考量，需要先制定详细计划
-- **Execution Strategy**: Task Todo — 4+ sequential steps with dependencies, same-file edits likely
-
-I'll create a structured task list with 5 steps covering: database schema, backend APIs, OAuth integration, frontend, and testing.
-
-Shall I proceed with this approach?
+*(Outputs Requirements Summary as structured markdown, then presents recommendation)*
 
 ## Key Principles
 
-1. **Task-oriented**: Focus on what needs to be done, not exploring ideas
-2. **Think-Harder by default**: Apply systematic analysis automatically
-3. **Adaptive depth**: Escalate to /think-ultra only for exceptional complexity
-4. **Efficient**: Get necessary info without over-questioning
-5. **Clear output**: Produce actionable requirements summary with insights
-6. **User control**: User confirms understanding before proceeding
+1. **Tool-first**: Every question MUST use `AskUserQuestion` tool — never plain text
+2. **Task-oriented**: Focus on what needs to be done, not exploring ideas
+3. **Think-Harder by default**: Apply systematic analysis automatically
+4. **Adaptive depth**: Escalate to /think-ultra only for exceptional complexity
+5. **Efficient**: Get necessary info without over-questioning
+6. **Clear output**: Produce actionable requirements summary with insights
+7. **User control**: User confirms understanding before proceeding
