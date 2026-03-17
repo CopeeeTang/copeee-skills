@@ -1,0 +1,16 @@
+{
+  "name": "copeee-skills",
+  "description": "Productivity skills for Claude Code: interview, spawn, save-session, source-first, codex-review, experiment-runner, claw-guru, github-kb, code-simplifier",
+  "owner": {
+    "name": "CopeeeTang",
+    "url": "https://github.com/CopeeeTang"
+  },
+  "plugins": [
+    {
+      "name": "copeee-skills",
+      "source": "./",
+      "description": "9 productivity skills: interview-mode, spawn, save-session, source-first, codex-review, experiment-runner, claw-guru, github-kb, code-simplifier",
+      "version": "1.1.0"
+    }
+  ]
+}
