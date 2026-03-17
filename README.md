@@ -5,7 +5,11 @@ Productivity skills for [Claude Code](https://claude.com/claude-code).
 ## Installation
 
 ```bash
-/plugin install github:CopeeeTang/copeee-skills
+# Step 1: Add as a marketplace source
+/plugin marketplace add CopeeeTang/copeee-skills
+
+# Step 2: Install the plugin
+/plugin install copeee-skills
 ```
 
 ## Skills
