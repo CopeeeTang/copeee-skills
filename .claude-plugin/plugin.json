@@ -8,5 +8,6 @@
   "homepage": "https://github.com/CopeeeTang/copeee-skills",
   "repository": "https://github.com/CopeeeTang/copeee-skills",
   "license": "MIT",
-  "keywords": ["skills", "interview", "spawn", "parallel", "session", "github-kb", "code-simplifier", "source-first", "codex-review", "experiment-runner", "claw-guru", "productivity"]
+  "keywords": ["skills", "interview", "spawn", "parallel", "session", "github-kb", "code-simplifier", "source-first", "codex-review", "experiment-runner", "claw-guru", "productivity"],
+  "skills": "./skills/"
 }

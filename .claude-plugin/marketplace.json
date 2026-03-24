@@ -10,27 +10,7 @@
     {
       "name": "copeee-skills",
       "description": "9 productivity skills: interview-mode, spawn, save-session, source-first, codex-review, experiment-runner, claw-guru, github-kb, code-simplifier",
-      "source": "./",
-      "version": "1.1.0",
-      "strict": false,
-      "author": {
-        "name": "CopeeeTang"
-      },
-      "repository": "https://github.com/CopeeeTang/copeee-skills",
-      "license": "MIT",
-      "keywords": ["skills", "interview", "spawn", "parallel", "session", "github-kb", "code-simplifier", "source-first", "codex-review", "experiment-runner", "claw-guru", "productivity"],
-      "category": "productivity",
-      "skills": [
-        "./skills/interview-mode",
-        "./skills/spawn",
-        "./skills/save-session",
-        "./skills/code-simplifier",
-        "./skills/codex-review",
-        "./skills/source-first",
-        "./skills/experiment-runner",
-        "./skills/github-kb",
-        "./skills/claw-guru"
-      ]
+      "source": "./"
     }
   ]
 }
