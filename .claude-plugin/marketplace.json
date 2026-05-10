@@ -4,12 +4,12 @@
     "name": "CopeeeTang"
   },
   "metadata": {
-    "description": "Productivity skills for Claude Code: interview, spawn, save-session, source-first, codex-review, experiment-runner, claw-guru, github-kb, code-simplifier"
+    "description": "11 productivity skills for Claude Code: interview, spawn, save-session, source-first, codex-review, experiment-runner, claw-guru, github-kb, code-simplifier, ultra-plan, init-project"
   },
   "plugins": [
     {
       "name": "copeee-skills",
-      "description": "9 productivity skills: interview-mode, spawn, save-session, source-first, codex-review, experiment-runner, claw-guru, github-kb, code-simplifier",
+      "description": "11 productivity skills: interview-mode, spawn, save-session, source-first, codex-review, experiment-runner (P1-P7 principles), claw-guru, github-kb, code-simplifier, ultra-plan, init-project (interview-driven project bootstrap with ML/Web profiles + dry-run preview)",
       "source": "./"
     }
   ]

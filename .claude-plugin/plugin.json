@@ -1,13 +1,13 @@
 {
   "name": "copeee-skills",
-  "version": "1.1.0",
-  "description": "9 productivity skills for Claude Code: interview-mode, spawn, save-session, source-first, codex-review, experiment-runner, claw-guru, github-kb, code-simplifier",
+  "version": "1.2.0",
+  "description": "11 productivity skills for Claude Code: interview-mode, spawn, save-session, source-first, codex-review, experiment-runner, claw-guru, github-kb, code-simplifier, ultra-plan, init-project (interview-driven project bootstrap with ML/Web profiles + dry-run preview)",
   "author": {
     "name": "CopeeeTang"
   },
   "homepage": "https://github.com/CopeeeTang/copeee-skills",
   "repository": "https://github.com/CopeeeTang/copeee-skills",
   "license": "MIT",
-  "keywords": ["skills", "interview", "spawn", "parallel", "session", "github-kb", "code-simplifier", "source-first", "codex-review", "experiment-runner", "claw-guru", "productivity"],
+  "keywords": ["skills", "interview", "spawn", "parallel", "session", "github-kb", "code-simplifier", "source-first", "codex-review", "experiment-runner", "claw-guru", "productivity", "ultra-plan", "init-project", "bootstrap", "claude-md"],
   "skills": "./skills/"
 }
