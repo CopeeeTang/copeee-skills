@@ -1,7 +1,7 @@
 {
   "name": "copeee-skills",
-  "version": "1.2.0",
-  "description": "11 productivity skills for Claude Code: interview-mode, spawn, save-session, source-first, codex-review, experiment-runner, claw-guru, github-kb, code-simplifier, ultra-plan, init-project (interview-driven project bootstrap with ML/Web profiles + dry-run preview)",
+  "version": "1.2.1",
+  "description": "11 productivity skills for Claude Code: interview-mode, spawn, save-session, source-first, codex-review, experiment-runner, claw-guru, github-kb, code-simplifier, ultra-plan, init-project (minimal-default project bootstrap: CLAUDE.md + research-notes.md + manifest + .gitignore; settings/commands/hooks are opt-in only)",
   "author": {
     "name": "CopeeeTang"
   },

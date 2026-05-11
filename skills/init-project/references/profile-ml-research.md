@@ -26,183 +26,212 @@ ML-Q2: 主要计算资源？
   [b] 多卡本地
   [c] 集群提交（AMLT / Slurm / Kubernetes）
   [d] CPU only
+  [e] 多硬件对比（如 A100 vs 4090，性能研究）
 
 ML-Q3: 性能/质量目标？（自由填写）
   - latency budget? throughput? accuracy floor?
 
-ML-Q4: 实验归档结构？
-  [a] experiments/{phase}/         (按 phase 分)
-  [b] experiments/{model}/         (按模型分)
-  [c] experiments/{benchmark}/     (按 benchmark 分)
-  [d] runs/{date}_{description}/   (按时间)
+ML-Q4: 研究问题列表？（自由填写多条，默认合并成 1 个 research-notes.md）
+  - 例: 数据 layout 是否有助理解 / 模型理解开放式意图 / 响应速度上限
+
+ML-Q5: 是否有不可越过的工程红线？
+  - 例: "ASR + 图像预处理必须并行（不允许串行）"
+  - 例: "VLM 必须本地推理，不允许换远端 API（影响 latency 研究可信度）"
+  → 进 CLAUDE.md ⚠️ IMPORTANT 段
 ```
 
 ---
 
-## 推荐 plugins（enabled）
+## 默认生成的 artifact（仅 init-project default 集，无项目级 settings/commands/hooks）
 
-```json
-{
-  "copeee-skills@copeee-skills": true,         // 通用 workflow（experiment-runner generalized 等）
-  "superpowers@superpowers-marketplace": true, // brainstorming / TDD / verification
-  "context7@claude-plugins-official": true,    // 库文档查询
-  "code-simplifier@claude-plugins-official": true,
-  "code-review@claude-plugins-official": true
-}
-```
+| Artifact | 内容 |
+|----------|------|
+| `CLAUDE.md` | WHY/WHAT/HOW + 硬件 + 数据 + 性能约束 + ⚠️ 红线（见下面模板片段） |
+| `CLAUDE.local.md` | 个人 secrets 占位 + 个人风格偏好 |
+| `research-notes.md` | 合并多个 RQ 到单文件（见下面模板）|
+| `pyproject.toml` | ML 依赖模板（`transformers`, `torch`, etc.）—— 不安装 |
+| `.gitignore` 追加块 | `models/`, `checkpoints/`, `*.bin`, `*.safetensors`, `wandb/`, `mlruns/`, `.env*`, `results/` 私有部分 |
 
-**禁用**（明确避免噪音）：
-- `frontend-design` / `ui-ux-pro-max` / `obsidian` —— ML 项目无关
-
-> **私有/项目专属 ML skill plugin（可选）**：很多 ML 团队会单独维护一个私有 plugin（比如内部的 experiment indexer / data path registry / cluster job submitter / proxy tunnel），那些 skill 通常含内部 endpoint 或数据路径，不适合公开。如果你有这种 plugin，在 `extraKnownMarketplaces` 里挂上并 enable 即可——init-project 不会强制依赖它。
-
----
-
-## 推荐 skills（从已装 plugin 挑哪些主动调用）
-
-| Skill | 来源 | 用途 |
-|-------|------|------|
-| `experiment-runner` | copeee-skills | 跑/监控/恢复实验生命周期（含 P1–P7 核心原则）|
-| `superpowers:brainstorming` | superpowers | 新研究点开问之前 |
-| `superpowers:verification-before-completion` | superpowers | 实验完成前的严格校验（防 null_rate 虚高、cache miss 等） |
-| `superpowers:test-driven-development` | superpowers | 写新 evaluator / metric 前 |
-
-**项目专属候选**（如果你或团队有私有 ML plugin，建议补上同类 skill）：
-- 实验结果索引 + 主表生成（避免手写主表幻觉）
-- 实验配置 schema + 历史错误案例库（减少配置漂移）
-- 数据路径 / 覆盖率 registry（Cloud blob 场景）
-- 集群 job 提交（AMLT / Slurm / Kubeflow）
-- 数据下载 → 上传 pipeline（HuggingFace / S3 → 内部 blob）
-
----
-
-## 推荐 .claude/commands/
-
-```
-.claude/commands/
-├── run-smoke.md       # 跑 N 题 smoke test（N 由用户在 Phase 4 给）
-├── profile-latency.md # 测端到端 latency（如有 latency 目标）
-└── compare-runs.md    # 比对两次实验的关键指标差异
-```
-
-各 command 的 description 都应明确：
-- 参数（args）
-- 实际跑的命令
-- 预期输出位置
-
-例（`run-smoke.md`）：
-```markdown
----
-description: "跑 smoke test 验证实验 pipeline。$ARGUMENTS 可指定模型/模式/数据切片。"
----
-
-Run a smoke test using the smallest dataset (mini_subset / N=5):
-$ARGUMENTS
-
-Default behavior:
-- benchmark: rtv (or what's in the user's first arg)
-- mode: D
-- model: gpt4o
-- subset: mini_subset.json
-- output: /tmp/smoke_$(date +%s).json
-
-Verify before declaring success: null_rate < 5%, no Phase A timeouts.
-```
-
----
-
-## 推荐 hooks
-
-```json
-"hooks": {
-  "PostToolUse": [
-    {
-      "matcher": "Edit|Write",
-      "hooks": [
-        {"type": "command", "command": "bash ~/.claude/hooks/python-syntax-check.sh"}
-      ]
-    }
-  ],
-  "Stop": [
-    {
-      "matcher": "",
-      "hooks": [
-        {"type": "command", "command": "bash ~/.claude/hooks/cleanup-empty-sessions.sh", "async": true}
-      ]
-    }
-  ]
-}
-```
-
-**特别注意**：实验 ML 项目**不要**装 `pytest on save`——单测本身往往慢且依赖 GPU；用 `verification-before-completion` skill 在 commit 前手动跑。
-
----
-
-## 推荐 .claude/settings.json 关键字段
-
-```json
-{
-  "permissions": {
-    "defaultMode": "dontAsk",
-    "allow": [
-      "Bash(pytest *)",
-      "Bash(python3 scripts/*)",
-      "Bash(amlt *)",
-      "Bash(azcopy *)"
-    ],
-    "deny": [
-      "Edit(.env)",
-      "Edit(*.pem)",
-      "Edit(secrets/**)",
-      "Edit(.azure/credentials)"
-    ]
-  },
-  "env": {
-    "ENABLE_TOOL_SEARCH": "true"
-  }
-}
-```
+> **不会自动生成**：`.claude/settings.json`、`.claude/commands/*`、hooks、`.claude/agents/*`。用户全局已 `dontAsk` + all-permissions + 已装 plugin 提供的 skill（experiment-runner / verification-before-completion / brainstorming 等）会自动按 description 触发，**无需项目级配置**。
 
 ---
 
 ## CLAUDE.md 模板片段（ML 研究专用段落）
 
 ```markdown
-## 服务器配置
-cd <PROJECT_ROOT>
-source <VENV>/bin/activate
-python3 instead of python
+# <project-name>
 
-## 硬件
-GPU: <user-filled, e.g. A100 80GB / 4090>
-CUDA: <auto-detected from nvidia-smi>
+## WHY
+<user-filled: 一句话研究目标>
 
-## API & 基础设施 ⚠️ IMPORTANT
-- <user-filled endpoint constraint, e.g. "永远不要直接调用 OpenAI 官方 endpoint，必须走 <proxy_host>">
-- 所有外部 API 都从代理走
+## WHAT
+<end-to-end pipeline 图，<= 5 行>
 
-## 数据
-- <user-filled, e.g. Azure Blob: <container>/<path>>
-- 全量 / smoke test 子集说明
+- 数据集: <user-filled, e.g. Azure Blob: <container>/<path>>
+- 全量 / smoke 子集
+- 评测: <metric 1> + <metric 2>
 
-## 性能约束
-- <user-filled latency / throughput / accuracy targets>
+## HOW
+依赖管理 (uv / pip / poetry):
+    uv sync                                  # 第一次装依赖
+    uv run python -m <module>.smoke --n 5    # 快验
 
-## 实验目录
-experiments/{phase|model|benchmark}/
-metadata/index.yaml — 由实验 indexer skill 维护（或脚本生成）
+实验结果归档:
+    results/{YYYY-MM-DD}/{hardware}/{exp_name}.json
+    每条 record 含 stage_timings 等关键字段
 
-## 跑实验工作流
-1. 配置 → 实验配置参考 skill（含 schema + 错误案例库）
-2. 跑 → /experiment-runner
-3. 整理表 → 实验 indexer skill（或手动维护 metadata/index.yaml）
+## ⚠️ 不可违反的红线
+1. <user-filled 红线 1，如"ASR 与图像预处理必须并行">
+2. <user-filled 红线 2，如"VLM 只用本地，不允许换远端 API">
+3. **不删除 results/** 下任何已落盘文件
+4. **SAS token / secret 永远不入 git**
+
+## 研究问题
+见 `research-notes.md`
+
+## 调试 latency / accuracy
+- 用 record 的 stage_timings 字段（首选）
+- 不用 wall-clock 推断
+```
+
+---
+
+## research-notes.md 模板（合并多个 RQ 到 1 个文档）
+
+```markdown
+# Research Notes — <project-name>
+
+## Problem statement
+<2-3 sentence 研究背景 + 核心目标>
+
+## Research questions
+
+### RQ1: <一句话 title>
+
+**问题**: <详细描述>
+
+**子问题**:
+- <sub-q 1>
+- <sub-q 2>
+
+**实验设计**:
+| condition | <var 1> | <var 2> |
+|-----------|---------|---------|
+| baseline  | ...     | ...     |
+| variant A | ...     | ...     |
+
+**指标**: <metric list>
+
+**TODO**:
+- [ ] 数据 schema 确认
+- [ ] 评估协议 draft
+- [ ] golden answer 标注规范
+
+### RQ2: <一句话 title>
+... (同结构)
+
+### RQ3: <一句话 title>
+... (同结构)
+
+## Cross-cutting engineering constraints
+- 红线 1: <同步 CLAUDE.md>
+- 红线 2: ...
+
+## Open questions
+- annotation: 谁标？标几遍？冲突仲裁？
+- ...
+```
+
+**何时**把单文件拆成 `.kiro/specs/<rq>/` 或类似多文件结构：
+1. 用户**明确说**"我要按 spec-driven 跑这些 RQ"
+2. 某个 RQ 已经分化出 design.md + tasks.md 实质内容
+3. 各 RQ 的实验设计差异巨大无法在一个文档讲清
+
+否则默认就是单文件 living doc，随项目演化追加内容。
+
+---
+
+## pyproject.toml 模板（不安装，只画蓝图）
+
+```toml
+[project]
+name = "<project-name>"
+version = "0.0.1"
+description = "<one-liner>"
+requires-python = ">=3.10"
+dependencies = [
+    # VLM / model serving (注释掉的需要时再开启)
+    "transformers>=4.45",
+    # "vllm>=0.6",          # 大模型推理（可选）
+    "torch",
+    # ASR / multimodal (按需)
+    # "faster-whisper>=1.0",
+    # "openai-whisper",
+    # Data / cloud
+    # "azure-storage-blob>=12.20",
+    # "datasets",          # HuggingFace
+    "pillow",
+    "numpy",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.0",
+    "ruff>=0.7",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+```
+
+> **关键**：注释掉一半依赖，让用户根据 backend / ASR 选定后**自己**取消注释 + `uv sync`。init-project **不**自动跑 `uv sync` / `pip install`。
+
+---
+
+## .gitignore 追加块（ML 项目）
+
+```
+# Models / checkpoints
+models/
+checkpoints/
+*.bin
+*.safetensors
+*.pt
+*.ckpt
+
+# Experiment tracking
+wandb/
+mlruns/
+lightning_logs/
+
+# Secrets
+.env
+.env.*
+*.pem
+*.key
+*credentials*
+
+# 个人偏好
+CLAUDE.local.md
+.claude/settings.local.json
+
+# Smoke / tmp
+/tmp/smoke_*
+.DS_Store
 ```
 
 ---
 
 ## 反模式（ML 项目特有）
 
-- **不要把 model checkpoint 放进 git**：自动加 `.gitignore`：`models/`, `checkpoints/`, `*.bin`, `*.safetensors`
-- **不要把 wandb logs / mlflow artifacts 写进 settings**：让 wandb 自己管
-- **不要让 Claude 自动跑长训练**：训练命令进 `permissions.deny` 或要求显式确认
-- **null_rate / cache_hit_rate 检查**进 `verification-before-completion` 而不是 CLAUDE.md（避免 prose 提醒被忽略）
+- **不要把 model checkpoint 放进 git** → 默认 `.gitignore` 已加 `models/`, `checkpoints/`, `*.bin`, `*.safetensors`
+- **不要把 wandb logs / mlflow artifacts 写进 settings** → 让 wandb 自己管
+- **不要让 Claude 自动跑长训练** → 别用 hook，让用户手动决定
+- **不要把 null_rate / cache_hit_rate / latency 检查写进 CLAUDE.md prose** → 用 `verification-before-completion` skill 在 commit 前跑（plugin skill 已经覆盖，不需要项目级配置）
+- **不要预生成 settings.json 的 deny 规则** → 用户全局 dontAsk 默认；除非该项目有特殊敏感目录（用户主动喊 `add settings` 才生成）
+- **不要拆研究问题到多文件** → 默认 1 个 `research-notes.md`，等用户喊"拆"再分
+- **不要在 init 阶段强行装 venv** → `pyproject.toml` 是蓝图，安装时机由用户自己决定

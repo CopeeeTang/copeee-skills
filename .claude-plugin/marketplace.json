@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "copeee-skills",
-      "description": "11 productivity skills: interview-mode, spawn, save-session, source-first, codex-review, experiment-runner (P1-P7 principles), claw-guru, github-kb, code-simplifier, ultra-plan, init-project (interview-driven project bootstrap with ML/Web profiles + dry-run preview)",
+      "description": "11 productivity skills: interview-mode, spawn, save-session, source-first, codex-review, experiment-runner (P1-P7 principles), claw-guru, github-kb, code-simplifier, ultra-plan, init-project (minimal-default project bootstrap: CLAUDE.md + research-notes.md + manifest + .gitignore; settings/commands/hooks are opt-in only via `add settings/commands/hooks`)",
       "source": "./"
     }
   ]

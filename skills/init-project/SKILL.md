@@ -1,19 +1,29 @@
 ---
 name: init-project
-description: "Bootstrap a new project's Claude Code configuration end-to-end: CLAUDE.md + .claude/settings.json + .claude/commands/ + hooks + recommended plugins/skills + .gitignore. Beyond /init: signal-driven recommendations from project type (ML research / web app / CLI / library / data pipeline / infra), personal vs team vs public sharing modes, and dry-run preview before any file is written. TRIGGER when: user wants to bootstrap/initialize/configure a new project for Claude Code (greenfield repo, fresh setup, '配置一个新项目', 'bootstrap project', 'init project', 'set up Claude Code for this repo'); user mentions /init-project command; user asks 'how do I configure Claude Code for X kind of project'; user wants to refactor existing .claude/ setup based on project type. Also trigger when user describes a new ML/research project + asks what configuration is needed. DO NOT trigger for: editing existing CLAUDE.md to fix one rule (use claude-md-improver), code-level work, single skill creation (use skill-creator), MCP setup question (use claude-automation-recommender)."
+description: "Bootstrap a new project's core docs and skeleton files for Claude Code: CLAUDE.md + CLAUDE.local.md (个人偏好) + research-notes.md (合并的研究问题文档) + pyproject.toml/equivalent (template, no install) + .gitignore. Beyond /init: signal-driven detection from project type (ML research / web app / CLI / library / data pipeline), personal vs team vs public sharing modes, dry-run preview before any file is written. Default 最小集 only — slash commands / .claude/settings.json / hooks / agents 都是 opt-in 不默认生成（已有 global dontAsk + all permissions + 已装 plugin 提供 skill）。TRIGGER when: user wants to bootstrap/initialize/configure a new project (greenfield repo, fresh setup, '配置一个新项目', 'bootstrap project', 'init project', 'set up Claude Code for this repo'); user mentions /init-project command; user asks 'how do I configure Claude Code for X kind of project'; user describes a new project + asks what initial docs/skeleton are needed. DO NOT trigger for: editing existing CLAUDE.md to fix one rule (use claude-md-improver), code-level work, single skill creation (use skill-creator), MCP setup question (use claude-automation-recommender)."
 ---
 
-# init-project — Bootstrap Claude Code 项目配置
+# init-project — Bootstrap 项目蓝图
 
 ## 角色定位
 
-你是项目"装修工长"。`/init` 是地基（一份 CLAUDE.md），本 skill 决定整个 `.claude/` 长什么样：哪些 plugin 装、哪些 hook 必须自动跑、个人 vs 团队的边界画在哪、推荐什么 slash commands。
+你是项目"打地基"工。你**只画蓝图**——CLAUDE.md / 研究问题文档 / 包管理 manifest / .gitignore。Claude 工具层面的"装修"（settings.json / commands / hooks / agents）默认**不动**，前提：
 
-**核心原则**：
+- 用户全局已经是 `dontAsk` + all-permissions（默认假设）
+- 项目级 skill 通过 plugin description 自动触发（不靠 .claude/skills/ 显式 enable）
+- venv / 依赖装机 deferred 到用户根据配置选定 backend 后自己做
+
+只在用户**明确要求**时才追加生成 `.claude/settings.json` / `.claude/commands/` / hooks。
+
+---
+
+## 核心原则
+
 1. **信号驱动**：先扫码再提问，不问已能从代码得知的
-2. **节制**：每类 artifact 推荐 1–2 条，反 kitchen-sink
-3. **dry-run 优先**：所有文件先打印 preview，用户审过再落盘
-4. **个人 vs 团队**：明确分层，个人偏好绝不污染 git
+2. **最小默认**：default artifact 集 = `CLAUDE.md` + 可选 `CLAUDE.local.md` + 研究问题单文件 + manifest + .gitignore
+3. **研究问题合并**：多个 RQ 默认进**一个** `research-notes.md`，不拆 `.kiro/specs/<n>/`——等真正分化时用户自己拆
+4. **dry-run 优先**：所有文件先打印 preview，用户审过再落盘
+5. **个人 vs 团队**：明确分层，个人偏好绝不污染 git
 
 ---
 
@@ -21,7 +31,7 @@ description: "Bootstrap a new project's Claude Code configuration end-to-end: CL
 
 ### Phase 1 — 扫码（自动，0 提问）
 
-并行跑这些探测，把结果做成"已识别"摘要：
+并行跑这些探测：
 
 | 探测 | 工具 | 推断 |
 |------|------|------|
@@ -36,19 +46,9 @@ description: "Bootstrap a new project's Claude Code configuration end-to-end: CL
 | `next.config` / `vite.config` / `webpack.config` | Glob | Web app 信号 |
 | `bin/` 含 shebang | Bash | CLI 工具信号 |
 
-输出格式（给用户看）：
+输出"已识别"摘要给用户看。
 
-```
-✓ 已识别
-  - 语言: Python (pyproject.toml + ruff 配置)
-  - 部署: 无 Dockerfile（本地开发）
-  - 信号: import torch (ML), azure-storage-blob (Azure cloud)
-  - 远端: github.com/CopeeeTang/<repo>.git (个人)
-  - 测试: 无 tests/ 目录
-  - 已有指令: 无 (greenfield .claude/ 配置)
-```
-
-如果检测到 `CLAUDE.md` 已存在 → 切换到 audit 模式（建议改用 `claude-md-improver` skill），本 skill 不覆盖已有文件。
+如果检测到 `CLAUDE.md` 已存在 → 转 `claude-md-improver` skill，本 skill 不覆盖已有文件。
 
 ### Phase 2 — 项目阶段 + 共享模式（2 题强制）
 
@@ -59,8 +59,8 @@ Q1: 项目阶段？
   [c] 已有 CLAUDE.md，要做体检 → 转 claude-md-improver 退出
 
 Q2: 谁会用这份配置？
-  [a] 仅自己 → 生成 CLAUDE.local.md + 个人 .gitignore
-  [b] 团队共享 → CLAUDE.md 入 git，分私有偏好层（CLAUDE.local.md）
+  [a] 仅自己 → 生成 CLAUDE.local.md（如有个人偏好），加入 .gitignore
+  [b] 团队共享 → CLAUDE.md 入 git，私有偏好分到 CLAUDE.local.md
   [c] 公开 OSS → 额外做 sanity check（路径/IP/secret 不得入 git）
 ```
 
@@ -76,115 +76,176 @@ Q3: 项目主要形态？（可叠加）
   ☐ Notebook / 探索分析
 ```
 
-每勾选一项 → 加载 `references/profile-{type}.md`（当前 MVP 只覆盖 `ml-research` 和 `web-app`，其他类型用通用模板 + 信号增强）。
+每勾选一项 → 加载 `references/profile-{type}.md`（当前覆盖 `ml-research` 和 `web-app`）。
 
-### Phase 4 — 关键 dimension（通用 4 题 + 类型特定 1–3 题）
-
-**通用必问**：
-1. **测试命令**（如何跑测试）→ 进 CLAUDE.md "HOW" 段 + 写 PostToolUse hook
-2. **Lint/format 命令** → **不**进 CLAUDE.md，写 hook
-3. **绝不能直调的 endpoint**（如内部代理 only）→ CLAUDE.md "⚠️ IMPORTANT" 段
-4. **敏感目录**（`.env`、`secrets/`、`migrations/`）→ `permissions.deny` + PreToolUse 阻断
+### Phase 4 — 关键 dimension（按项目类型选问，避免无用问题）
 
 **ML 研究项目额外问**（参考 `references/profile-ml-research.md`）：
+- 研究问题清单（几条？分别是什么？合一个文档还是要拆？）
 - 数据在哪？（local / Azure Blob / HF / S3）
 - 计算资源？（A100 / 4090 / 集群 / CPU）
 - 性能目标？（latency / throughput / accuracy）
-- 实验结果归档结构？
+- 哪些是**红线规则**（绝不能跨的边界，如"VLM 只用本地"、"ASR 必须并行"）→ 进 CLAUDE.md ⚠️ IMPORTANT 段
 
 **Web app 项目额外问**（参考 `references/profile-web-app.md`）：
-- 前端框架？后端运行时？
-- 浏览器测试需要 Playwright MCP 吗？
-- 数据库？需要装 postgres/supabase MCP 吗？
+- 前端框架？后端运行时？数据库？
+- 红线规则（如"prod migration 必须人工 review"）
+
+**通用追问**（仅当用户主动提"我想要 X"时）：
+- 想生成 `.claude/settings.json` 收紧 permissions？默认**不生成**
+- 想生成 `.claude/commands/` 项目级 slash command？默认**不生成**
+- 想配 hook（lint-on-save 等）？默认**不生成**
 
 ---
 
 ## Phase 5 — Dry-run preview + 用户确认
 
-把要生成的全部 artifact 用以下格式 dump 一遍，**不写文件**：
-
 ```
-========== DRY-RUN: 5 files will be created ==========
+========== DRY-RUN: 4 files will be created ==========
+工作目录: <user-dir>
+模式: <personal | team | public>
 
-[1/5] CLAUDE.md (62 lines)
+[1/4] CLAUDE.md (62 lines)
 ---内容---
 
-[2/5] .claude/settings.json (54 lines)
+[2/4] CLAUDE.local.md (18 lines, 个人模式才生成)
 ---内容---
 
-[3/5] .claude/commands/run-smoke.md (12 lines)
+[3/4] research-notes.md (合并 3 个 RQ 到单文件)
 ---内容---
 
-[4/5] .gitignore (append 5 lines)
----追加内容---
-
-[5/5] CLAUDE.local.md (28 lines, 个人模式)
+[4/4] pyproject.toml (template only — not running `uv sync`)
 ---内容---
+
+Skipped by default (可手动追加：edit add settings / edit add commands):
+  - .claude/settings.json  (你已有全局 dontAsk + all permissions)
+  - .claude/commands/*     (建议依赖 plugin skill，不引入项目级 slash command)
+  - .gitignore            (skip — 还不是 git repo / 跳过追加)
 
 ========== END DRY-RUN ==========
 
-Confirm? [y / 编辑哪个 / cancel]
+Confirm?
+  y           = 全部落盘
+  edit N      = 重写第 N 个文件
+  skip N      = 不生成第 N 个
+  add settings / add commands / add hooks   = 追加 opt-in artifact
+  cancel      = 全部放弃
 ```
 
-用户可以：
-- `y` → 全部落盘
-- `edit 2` → 修改第 2 个文件后再 preview
-- `skip 4` → 不生成第 4 个
-- `cancel` → 全部放弃
+用户主动 `add settings` / `add commands` / `add hooks` 才追加。
 
 ---
 
 ## Phase 6 — 写文件 + 后续指引
 
-落盘后输出"下一步建议"：
-
 ```
-✓ 已生成 4 个文件（跳过了 .gitignore 因为不是 git repo）
+✓ 已生成 4 个文件
 
-下一步：
-  1. 重启 Claude Code 让 .claude/settings.json 的 plugin/hook 生效
-  2. 第一个建议命令：试一下 /run-smoke
-  3. 第一次出错或 Claude 犯同样错误 2 次时 → 加进 CLAUDE.md
-  4. 30 天后 review CLAUDE.md，问"删了它 Claude 会不会犯错"——不会就删
+下一步（按需，不强制）：
+  1. 写代码前：先选 backend（vLLM / transformers / Whisper backend）→ 然后 `uv sync` 装 venv
+  2. 第一次 git init 后：把 CLAUDE.local.md 加入 .gitignore
+  3. 出现第二次同样错误 → 加进 CLAUDE.md
+  4. 真有项目级 slash 高频 workflow（>5 次/周）时 → `init-project add commands`
+  5. 30 天后 review CLAUDE.md，问"删了它 Claude 会不会犯错"——不会就删
 ```
 
 ---
 
-## Artifact 矩阵（按"必生成 / 条件生成"）
+## Artifact 矩阵（new default = minimal）
+
+### Default 生成（默认，不问也生成）
 
 | Artifact | 何时生成 | 大小目标 |
 |----------|----------|----------|
 | `CLAUDE.md` | 总是 | < 80 行 |
 | `CLAUDE.local.md` | 个人模式 + 有个人偏好 | < 30 行 |
-| `.claude/settings.json` | 总是 | 50–80 行 |
-| `.claude/settings.local.json` | 个人模式 | < 20 行 |
-| `.gitignore` 追加块 | 是 git repo | +5 行 |
-| `.mcp.json` | 有外部依赖（DB / 浏览器测试） | 按需 |
-| `.claude/commands/*.md` | 1–2 条高频 workflow | 每个 < 10 行 |
-| `.claude/agents/*.md` | 大项目（>10K LoC）才 | 每个 < 50 行 |
-| `AGENTS.md` 软链 | 同时用 Codex / Cursor 才 | `ln -s CLAUDE.md AGENTS.md` |
-| `SPEC.md` 模板 | 用户勾选"我要 spec-driven" | 50 行模板 |
+| `research-notes.md`（或类似单文件 spec） | 用户提出多个研究问题 | 60–120 行 |
+| `pyproject.toml` / `package.json` / 等 | 项目类型 + 语言匹配，**只生成不安装** | < 50 行 |
+| `.gitignore` 追加块 | 是 git repo 才追加 | +5 行 |
+
+### Opt-in（用户主动喊 `add ...` 才生成）
+
+| Artifact | 何时生成 |
+|----------|----------|
+| `.claude/settings.json` | 用户明确要收紧 permissions 或加 env vars 之外的事 |
+| `.claude/settings.local.json` | 个人模式 + 有项目专属个人 env（如 SAS token 占位）|
+| `.claude/commands/*.md` | 用户给出明确高频 workflow (>5 次/周)|
+| `.claude/agents/*.md` | 大项目（>10K LoC）+ 明确多角色需求 |
+| `.claude/hooks/*` in settings.json | 用户明确要 lint-on-save / pre-commit 等自动化 |
+| `.mcp.json` | 项目有外部依赖（DB / 浏览器测试 / Slack 集成）|
+| `AGENTS.md` 软链 | 用户同时用 Codex/Cursor |
+| `SPEC.md` 模板 | 用户勾选"我要 spec-driven" |
+
+> **设计判断依据**：用户全局已经是 `dontAsk` + all-permissions 默认 + 已装 plugin 提供 skill 库。再生成项目级 `.claude/settings.json` 是噪音；项目级 slash command 比 plugin skill 触发率低，默认不生成更干净。
+
+---
+
+## 研究问题合并规则
+
+ML / 研究项目常有多个 RQ。**默认合并到 1 个 `research-notes.md`**，结构：
+
+```markdown
+# Research Notes — <project-name>
+
+## Problem statement
+...
+
+## Research questions
+1. RQ1: <一句话>
+2. RQ2: <一句话>
+3. RQ3: <一句话>
+
+## RQ1 — <title>
+- 子问题: ...
+- 实验设计: ...
+- 评估指标: ...
+
+## RQ2 — <title>
+... (同上结构)
+
+## RQ3 — <title>
+... (同上结构)
+
+## Engineering constraints
+- 红线 1: ...（同步进 CLAUDE.md ⚠️ IMPORTANT）
+- 红线 2: ...
+
+## Open questions
+- ...
+
+## TODO
+- [ ] 数据 schema 确认
+- [ ] 评估协议草稿
+```
+
+**何时拆分到 `.kiro/specs/<rq>/` 或类似**：
+- 用户**明确说**"我要按 spec-driven 跑"
+- 单个 RQ 已经分化出 design.md + tasks.md 内容
+- 各 RQ 实验设计差异巨大无法在一个文档讲清
+
+默认不拆。
 
 ---
 
 ## 反模式（必避免）
 
-1. **Kitchen-sink**：每类 artifact 推荐 ≤ 2 条；类型表里的"建议清单"绝不是"全装"
-2. **lint 写进 CLAUDE.md**：HumanLayer "Never send an LLM to do a linter's job"——能交给 hook 的事绝不写 prose
-3. **个人偏好混进 team CLAUDE.md**：永远分 `CLAUDE.md`（git）vs `CLAUDE.local.md`（gitignore）
-4. **盲生成不审**：所有写盘前必走 Phase 5 dry-run，用户能逐文件 edit/skip/cancel
-5. **过早 over-engineering**：greenfield 不装 5 个 MCP + 4 个 subagent；先 CLAUDE.md + settings.json，后面按"出现真实痛点再加"
-6. **复制别人的模板**：`references/profile-*.md` 是"起点"不是"答案"，必须基于 interview 答案裁剪
-7. **slash command 满天飞**：1–2 个高价值命令，多了等于没有
+1. **Kitchen-sink default**：用户没要的 artifact 不生成。`.claude/settings.json` / `.claude/commands/` / hooks 全部 opt-in
+2. **过早拆研究问题**：多 RQ 默认进一个 `research-notes.md`；用户主动喊"拆"才分文件
+3. **lint 写进 CLAUDE.md**：HumanLayer "Never send an LLM to do a linter's job"——能交给 hook 的事绝不写 prose
+4. **个人偏好混进 team CLAUDE.md**：永远分 `CLAUDE.md`（git）vs `CLAUDE.local.md`（gitignore）
+5. **盲生成不审**：所有写盘前必走 Phase 5 dry-run，用户能逐文件 edit/skip/cancel
+6. **强制 venv 安装**：只生成 `pyproject.toml` 模板，**不**自动 `uv sync` / `pip install`——venv 安装时机由用户根据 backend 选定后自己做
+7. **重复 global 配置**：用户 global 已经 `dontAsk` + all-permissions，不要在 `.claude/settings.json` 重复声明同样规则
+8. **slash command 满天飞**：默认不生成；用户明确给出高频 workflow 才追加
 
 ---
 
 ## 与其他 skill 的边界
 
-- 与 **`/init`**（CLAUDE_CODE_NEW_INIT=1 多阶段版）：`/init` 只生成 CLAUDE.md / skills / hooks 三类；本 skill 多 5 类（settings.json、settings.local.json、.gitignore、.mcp.json、commands、agents），并加项目类型 profile + 个人/团队/公开模式区分
-- 与 **`claude-automation-recommender`**：那个是"现有项目体检"（read-only 推荐），本 skill 是"从 0 → 1 配齐"（实际生成文件）
-- 与 **`claude-md-improver`**：那个改已有 CLAUDE.md，本 skill 不覆盖已有 CLAUDE.md（检测到则跳到 audit 模式）
-- 与 **`skill-creator`**：那个建一个新 skill；本 skill 推荐"从已装 plugin 里挑哪些 skill 要 enable"
+- 与 **`/init`**（CLAUDE_CODE_NEW_INIT=1 多阶段版）：`/init` 主生成 CLAUDE.md；本 skill 加上 research-notes / pyproject / .gitignore，并支持 opt-in 追加 settings/commands/hooks
+- 与 **`claude-automation-recommender`**：那个是"现有项目体检"（read-only 推荐 hook/plugin 等），本 skill 是"从 0 → 1 出最小蓝图"（实际生成文件 + opt-in 扩展）
+- 与 **`claude-md-improver`**：那个改已有 CLAUDE.md；本 skill 不覆盖已有 CLAUDE.md（检测到则跳到 audit 模式）
+- 与 **`skill-creator`**：那个建一个新 skill；本 skill 只生成项目蓝图，不动 skill 配置
 
 ---
 
@@ -194,17 +255,15 @@ Confirm? [y / 编辑哪个 / cancel]
 |------|----------|
 | `references/profile-ml-research.md` | Phase 3 选 ML 研究 |
 | `references/profile-web-app.md` | Phase 3 选 Web app |
-| `references/hooks-patterns.md` | 生成 settings.json hook 块时 |
-| `references/permissions-deny-presets.md` | Phase 4 第 4 题答完后 |
+| `references/hooks-patterns.md` | 仅当用户喊 `add hooks` 时 |
+| `references/permissions-deny-presets.md` | 仅当用户喊 `add settings` 时 |
 
 ---
 
 ## 调研依据（设计来源）
 
 - Anthropic best-practices：CLAUDE.md "Would removing this cause Claude to make mistakes? If not, cut it"
-- Anthropic best-practices：Hooks 是 deterministic，CLAUDE.md 是 advisory
-- Anthropic memory doc：CLAUDE_CODE_NEW_INIT=1 多阶段流程是官方雏形（本 skill 是其超集）
+- Anthropic best-practices：Hooks 是 deterministic，CLAUDE.md 是 advisory（但只在需要时加）
+- Anthropic memory doc：`CLAUDE_CODE_NEW_INIT=1` 多阶段流程是官方雏形
 - HumanLayer 博客：< 60 行 root CLAUDE.md / WHY-WHAT-HOW 框架
-- Anthropic claude-automation-recommender：信号 → 推荐映射 + 数量节制
-- abhishekray07/claude-md-templates：Global / Project / Local / Rules / Workflows 五层
-- ETH Zurich 研究：auto-generated 配置文件让 agent "20% more expensive"——所以**强制 dry-run + 用户确认**是核心约束
+- ETH Zurich 研究：auto-generated 配置文件让 agent "20% more expensive"——所以**强制 dry-run + minimal default + 用户确认**是核心约束
