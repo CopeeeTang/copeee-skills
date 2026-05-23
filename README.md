@@ -21,6 +21,7 @@ Productivity skills for [Claude Code](https://claude.com/claude-code).
 | **interview-mode** | `/interview` | Structured requirements clarification before planning. Uses interactive `AskUserQuestion` UI for precise multi-choice questioning. |
 | **spawn** | `/spawn <task>` | Task execution topology router. Analyzes dependencies and routes to 4 execution modes: Background Subagents, Agent Teams, Task Todo, or Codex delegation. |
 | **save-session** | `/save-session [project]` | Save session action history before context compaction. Extracts key decisions, data, and next steps via subagent. |
+| **handoff** | `/handoff [next-focus]` | Compact the current conversation into a handoff document written to OS tmp dir, so a fresh agent can pick up the work. Complements `save-session` (which archives into `docs/history/`). Adapted from [mattpocock/skills](https://github.com/mattpocock/skills). |
 
 ### Code Quality
 

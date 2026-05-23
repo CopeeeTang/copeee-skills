@@ -4,12 +4,12 @@
     "name": "CopeeeTang"
   },
   "metadata": {
-    "description": "11 productivity skills for Claude Code: interview, spawn, save-session, source-first, codex-review, experiment-runner, claw-guru, github-kb, code-simplifier, ultra-plan, init-project"
+    "description": "12 productivity skills for Claude Code: interview, spawn, save-session, source-first, codex-review, experiment-runner, claw-guru, github-kb, code-simplifier, ultra-plan, init-project, handoff"
   },
   "plugins": [
     {
       "name": "copeee-skills",
-      "description": "11 productivity skills: interview-mode, spawn, save-session, source-first, codex-review, experiment-runner (P1-P7 principles), claw-guru, github-kb, code-simplifier, ultra-plan, init-project (minimal-default project bootstrap: CLAUDE.md + research-notes.md + manifest + .gitignore; settings/commands/hooks are opt-in only via `add settings/commands/hooks`)",
+      "description": "12 productivity skills: interview-mode, spawn, save-session, source-first, codex-review, experiment-runner (P1-P7 principles), claw-guru, github-kb, code-simplifier, ultra-plan, init-project, handoff (compact session to OS tmp dir for next agent; complements save-session)",
       "source": "./"
     }
   ]
