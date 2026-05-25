@@ -1,5 +1,9 @@
 ---
 name: experiment-runner
+paths:
+  - "**/experiments/**"
+  - "**/scripts/**"
+  - "streaming-agent/**"
 description: "Run, monitor, recover, and babysit ML evaluation experiments end-to-end. Covers the full lifecycle: intent alignment, dry-run validation, auto-launch, checkpoint recovery, real-time/cron-based self-healing monitoring, and post-completion validation. TRIGGER when: user wants to run/start/launch/rerun experiments or evaluations, monitor running experiments or check experiment logs, recover from failures like 429 quota errors or process death, set up monitoring for long-running tasks, or do a dry-run before committing to a full run. Also trigger for 'babysit', 'experiment-runner', and when user provides monitor CLI args like 'monitor experiments/X.json --log Y --expected N'. DO NOT trigger for: analyzing/comparing existing results (tables, charts, LaTeX), writing scripts to parse result files, code review or code modification, dataset creation or preprocessing, GPU/system monitoring, training job submission (use amlt-run-job), or autonomous development tasks."
 ---
 > **Environment placeholders** (replace these in your shell/env, or override per-call):
