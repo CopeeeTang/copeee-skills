@@ -1,6 +1,6 @@
 {
   "name": "copeee-skills",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "12 productivity skills for Claude Code: interview-mode, spawn, save-session, source-first, codex-review, experiment-runner, claw-guru, github-kb, code-simplifier, ultra-plan, init-project, handoff (compact conversation to OS tmp dir for fresh-agent pickup; complements save-session)",
   "author": {
     "name": "CopeeeTang"
